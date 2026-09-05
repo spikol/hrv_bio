@@ -1,6 +1,7 @@
 import { SENSOR_REGISTRY } from './sensors/registry.js';
 import { HRVProcessor } from './hrv/HRVProcessor.js';
 import { Tachogram } from './visualizer/Tachogram.js';
+import { JellyfishOcean } from './visualizer/JellyfishOcean.js';
 import { BiofeedbackEngine } from './audio/BiofeedbackEngine.js';
 import { RRSimulator } from './sim/RRSimulator.js';
 
@@ -34,6 +35,7 @@ const simStopBtn = $('sim-stop-btn');
 let adapter = null;
 const hrv = new HRVProcessor({ windowSeconds: 60 });
 const tachogram = new Tachogram($('tachogram'));
+const ocean = new JellyfishOcean($('ocean'));
 const audioEngine = new BiofeedbackEngine();
 const simulator = new RRSimulator((rrMs) => handleBeat(rrMs, performance.now()));
 
@@ -88,6 +90,7 @@ function resetMetricsUI() {
   mCoherence.textContent = '–';
   mCount.textContent = '0';
   batteryText.hidden = true;
+  ocean.updateMetrics({ coherence: 0.65, bpm: 70 });
 }
 
 function wireAdapter(instance) {
@@ -117,6 +120,8 @@ function handleBeat(rrMs, timestamp) {
   updateMetricsUI(metrics);
   audioEngine.pulse();
   audioEngine.updateMapping(metrics);
+  ocean.updateMetrics(metrics);
+  ocean.pulse();
 }
 
 function updateMetricsUI(metrics) {

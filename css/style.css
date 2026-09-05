@@ -197,6 +197,15 @@ button:disabled {
   display: block;
 }
 
+.ocean-canvas {
+  width: 100%;
+  height: 220px;
+  background: #02080d;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  display: block;
+}
+
 .toggles {
   gap: 1.5rem;
 }
