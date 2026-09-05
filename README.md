@@ -5,7 +5,9 @@ chest strap and turns it into sound with [Tone.js](https://tonejs.github.io/).
 No build step, no server-side code — just files served over HTTP.
 
 See [notes.md](notes.md) for a walkthrough of how the code is organized
-and how data flows from a heartbeat to a sound.
+and how data flows from a heartbeat to a sound, and
+[expansion_plan.md](expansion_plan.md) for what's needed to add EmotiBit
+and BITalino support.
 
 ## Running it
 
@@ -83,6 +85,8 @@ than a browser-only BLE connection. Their stub classes already implement
 the `SensorAdapter` interface, so wiring them in later is a matter of
 filling in `connect()`/`disconnect()`, not restructuring the app. To add a
 device once its adapter exists, add one entry to `js/sensors/registry.js`.
+See [expansion_plan.md](expansion_plan.md) for the detailed bridge design
+for each.
 
 ### HRV metrics
 
