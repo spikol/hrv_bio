@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HRV Biofeedback</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>HRV Biofeedback</h1>
+    <p class="subtitle">Live heart-rate variability &rarr; sound</p>
+  </header>
+
+  <main class="layout">
+    <section class="card" id="sensor-card">
+      <h2>Sensor</h2>
+      <div class="row">
+        <label for="device-select">Device</label>
+        <select id="device-select"></select>
+      </div>
+      <div class="row buttons">
+        <button id="connect-btn" type="button">Connect</button>
+        <button id="disconnect-btn" type="button" disabled>Disconnect</button>
+      </div>
+      <div class="status-line">
+        <span class="dot" id="status-dot"></span>
+        <span id="status-text">Not connected</span>
+        <span id="battery-text" class="battery" hidden></span>
+      </div>
+      <p class="hint">Web Bluetooth requires Chrome/Edge on <code>https://</code> or <code>localhost</code>, and a device that's paired/awake (tap the Polar H10 to wake it).</p>
+      <div id="log" class="log" aria-live="polite"></div>
+    </section>
+
+    <section class="card" id="metrics-card">
+      <h2>Live metrics</h2>
+      <div class="metrics-grid">
+        <div class="metric"><span class="metric-label">BPM</span><span class="metric-value" id="m-bpm">&ndash;</span></div>
+        <div class="metric"><span class="metric-label">RMSSD</span><span class="metric-value" id="m-rmssd">&ndash;</span><span class="metric-unit">ms</span></div>
+        <div class="metric"><span class="metric-label">SDNN</span><span class="metric-value" id="m-sdnn">&ndash;</span><span class="metric-unit">ms</span></div>
+        <div class="metric"><span class="metric-label">pNN50</span><span class="metric-value" id="m-pnn50">&ndash;</span><span class="metric-unit">%</span></div>
+        <div class="metric"><span class="metric-label">Calm score</span><span class="metric-value" id="m-coherence">&ndash;</span></div>
+        <div class="metric"><span class="metric-label">Beats</span><span class="metric-value" id="m-count">0</span></div>
+      </div>
+      <canvas id="tachogram" class="tachogram"></canvas>
+      <p class="hint">Tachogram: beat-to-beat (RR) interval, most recent on the right.</p>
+    </section>
+
+    <section class="card" id="audio-card">
+      <h2>Audio (Tone.js)</h2>
+      <div class="row buttons">
+        <button id="audio-enable-btn" type="button">Enable audio</button>
+        <button id="audio-disable-btn" type="button" disabled>Turn off audio</button>
+      </div>
+      <div class="row toggles">
+        <label><input type="checkbox" id="toggle-pulse" checked /> Heartbeat pulse</label>
+        <label><input type="checkbox" id="toggle-pad" checked /> Ambient pad</label>
+      </div>
+      <div class="row slider-row">
+        <label for="volume">Master volume</label>
+        <input type="range" id="volume" min="-40" max="0" value="-10" />
+      </div>
+      <p class="hint">The pad's brightness &amp; reverb follow RMSSD; its chord blends between a calm and tense voicing based on the calm score. Each beat triggers a short pulse.</p>
+    </section>
+
+    <section class="card" id="simulator-card">
+      <h2>Test signal (no sensor needed)</h2>
+      <div class="row slider-row">
+        <label for="stress-slider">Relaxed / Stressed</label>
+        <input type="range" id="stress-slider" min="0" max="100" value="20" />
+      </div>
+      <div class="row buttons">
+        <button id="sim-start-btn" type="button">Start test signal</button>
+        <button id="sim-stop-btn" type="button" disabled>Stop test signal</button>
+      </div>
+      <p class="hint">Generates synthetic heartbeats through the same HRV &amp; audio pipeline as a real sensor &mdash; slide toward "stressed" for a faster rate and lower variability (lower HRV), toward "relaxed" for the opposite. Handy for hearing the audio mapping without a Polar H10 on hand.</p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/tone@14.8.49/build/Tone.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
