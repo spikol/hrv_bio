@@ -1,8 +1,12 @@
 # HRV Biofeedback
 
+**Live: [spikol.github.io/hrv_bio](https://spikol.github.io/hrv_bio/)**
+
 A static HTML/CSS/JS app that reads live heart-rate variability from a BLE
 chest strap and turns it into sound with [Tone.js](https://tonejs.github.io/).
-No build step, no server-side code — just files served over HTTP.
+No build step, no server-side code — just files served over HTTP, including
+straight from GitHub Pages above (it's served over `https://`, so Web
+Bluetooth works there too, not just on localhost).
 
 See [notes.md](notes.md) for a walkthrough of how the code is organized
 and how data flows from a heartbeat to a sound, and
@@ -13,6 +17,11 @@ and BITalino support.
 
 Web Bluetooth requires `https://` or `localhost`, and only works in
 Chromium-based browsers (Chrome, Edge). It will not work in Safari or Firefox.
+
+Easiest: just open **[spikol.github.io/hrv_bio](https://spikol.github.io/hrv_bio/)**
+in Chrome or Edge — it's `https://`, so no local setup needed.
+
+To run it locally instead (e.g. while making changes):
 
 ```sh
 cd /Users/zfp165/Documents/dev/hrv
