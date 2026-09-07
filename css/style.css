@@ -204,6 +204,35 @@ button:disabled {
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   display: block;
+  margin-bottom: 0.6rem;
+}
+
+.ocean-canvas[hidden] {
+  display: none;
+}
+
+.style-toggle {
+  gap: 0;
+  background: #101619;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 0.2rem;
+  width: fit-content;
+}
+
+.style-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+.style-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: #eafffb;
 }
 
 .toggles {

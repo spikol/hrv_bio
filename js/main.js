@@ -2,6 +2,7 @@ import { SENSOR_REGISTRY } from './sensors/registry.js';
 import { HRVProcessor } from './hrv/HRVProcessor.js';
 import { Tachogram } from './visualizer/Tachogram.js';
 import { JellyfishOcean } from './visualizer/JellyfishOcean.js';
+import { MoebiusJellyfish } from './visualizer/MoebiusJellyfish.js';
 import { BiofeedbackEngine } from './audio/BiofeedbackEngine.js';
 import { RRSimulator } from './sim/RRSimulator.js';
 
@@ -36,6 +37,7 @@ let adapter = null;
 const hrv = new HRVProcessor({ windowSeconds: 60 });
 const tachogram = new Tachogram($('tachogram'));
 const ocean = new JellyfishOcean($('ocean'));
+const oceanMoebius = new MoebiusJellyfish($('ocean-moebius'));
 const audioEngine = new BiofeedbackEngine();
 const simulator = new RRSimulator((rrMs) => handleBeat(rrMs, performance.now()));
 
@@ -91,6 +93,7 @@ function resetMetricsUI() {
   mCount.textContent = '0';
   batteryText.hidden = true;
   ocean.updateMetrics({ coherence: 0.65, bpm: 70 });
+  oceanMoebius.updateMetrics({ coherence: 0.65, bpm: 70 });
 }
 
 function wireAdapter(instance) {
@@ -122,6 +125,8 @@ function handleBeat(rrMs, timestamp) {
   audioEngine.updateMapping(metrics);
   ocean.updateMetrics(metrics);
   ocean.pulse();
+  oceanMoebius.updateMetrics(metrics);
+  oceanMoebius.pulse();
 }
 
 function updateMetricsUI(metrics) {
@@ -201,6 +206,22 @@ simStopBtn.addEventListener('click', () => {
   updateConnectAvailability(adapter?.status);
   log('Test signal stopped.');
 });
+
+const stylePixelBtn = $('style-pixel-btn');
+const styleMoebiusBtn = $('style-moebius-btn');
+const oceanCanvas = $('ocean');
+const oceanMoebiusCanvas = $('ocean-moebius');
+
+function setOceanStyle(style) {
+  const pixel = style === 'pixel';
+  oceanCanvas.hidden = !pixel;
+  oceanMoebiusCanvas.hidden = pixel;
+  stylePixelBtn.classList.toggle('active', pixel);
+  styleMoebiusBtn.classList.toggle('active', !pixel);
+}
+
+stylePixelBtn.addEventListener('click', () => setOceanStyle('pixel'));
+styleMoebiusBtn.addEventListener('click', () => setOceanStyle('moebius'));
 
 if (!navigator.bluetooth) {
   log('This browser does not support Web Bluetooth. Use Chrome or Edge over https:// or localhost.', true);

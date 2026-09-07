@@ -58,7 +58,8 @@ js/sensors/
 js/hrv/HRVProcessor.js  rolling HRV metrics from a stream of RR intervals
 
 js/visualizer/Tachogram.js      canvas beat-to-beat interval chart
-js/visualizer/JellyfishOcean.js  canvas jellyfish scene: HRV metrics -> color/motion
+js/visualizer/JellyfishOcean.js    pixel-art jellyfish scene: HRV metrics -> color/motion
+js/visualizer/MoebiusJellyfish.js  same mapping, drawn as a single ink-and-wash jellyfish
 
 js/audio/BiofeedbackEngine.js  Tone.js graph: HRV metrics -> sound
 
@@ -127,14 +128,23 @@ tempo from BPM, a breathing pacer, etc).
 
 ### Ocean visualization
 
-The **Ocean** panel mirrors the audio mapping visually with a small
-pixel-art scene: jellyfish blend blue (calm) to red (stressed) based on
-the calm score, continuously swim upward and fade out near the top edge,
-then respawn fading in from below the bottom — faster and more often
-under stress, slow and unhurried when calm. Their bells pulse in time
-with BPM, with an extra synchronized kick on every real heartbeat, the
-same moment the audio pulse fires. It's driven by the same `handleBeat()`
-call in `main.js` as the audio, so the two never fall out of sync.
+The **Ocean** panel mirrors the audio mapping visually, in two swappable
+styles (toggle in the panel), both reading the same live metrics:
+
+- **Pixel (school)** — five flat-shaded pixel-art jellyfish.
+- **Moebius (solo)** — one jellyfish drawn with flowing bezier curves,
+  ink outlines, and a soft color wash, plus drifting bubbles — a loose
+  nod to Mœbius's linework, the opposite technique from the blocky pixel
+  style.
+
+In both, jellyfish blend blue (calm) to red (stressed) based on the calm
+score, continuously swim upward and fade out near the top edge, then
+respawn fading in from below the bottom — faster and more often under
+stress, slow and unhurried when calm. Their bells pulse in time with BPM,
+with an extra synchronized kick on every real heartbeat, the same moment
+the audio pulse fires. Both renderers are driven by the same
+`handleBeat()` call in `main.js` as the audio, so switching styles never
+falls out of sync.
 
 ## Known limitations
 

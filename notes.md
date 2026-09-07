@@ -17,20 +17,22 @@ BLE device / test-signal slider
                                                                     │
                     ┌───────────────────────┬───────────────────────┼───────────────────────┐
                     ▼                       ▼                        ▼                        ▼
-            HRVProcessor.addRR()     Tachogram.push()          BiofeedbackEngine        JellyfishOcean
-            → { bpm, sdnn, rmssd,       (canvas chart)          .pulse() (per beat)     .updateMetrics()
-                 pnn50, coherence }                              .updateMapping()        .pulse() (per beat)
-                    │                                                  │                        │
-                    ▼                                                  ▼                        ▼
-            metrics-card DOM text                            Tone.js audio graph        canvas jellyfish scene
+            HRVProcessor.addRR()     Tachogram.push()          BiofeedbackEngine        JellyfishOcean +
+            → { bpm, sdnn, rmssd,       (canvas chart)          .pulse() (per beat)     MoebiusJellyfish
+                 pnn50, coherence }                              .updateMapping()        .updateMetrics()
+                    │                                                  │                 .pulse() (per beat)
+                    ▼                                                  ▼                        │
+            metrics-card DOM text                            Tone.js audio graph                ▼
+                                                                                    two canvases, one shown
+                                                                                    at a time via a style toggle
 ```
 
-Everything downstream of a beat — HRV math, the chart, the audio, the
-jellyfish — doesn't care whether that beat came from a real Polar H10 or
-the test-signal simulator. All four just get called from the same
-`handleBeat(rrMs, timestamp)` in `main.js`. That's the one seam that
-matters in this codebase: anything that can produce an RR interval can
-drive the whole app.
+Everything downstream of a beat — HRV math, the chart, the audio, both
+jellyfish renderers — doesn't care whether that beat came from a real
+Polar H10 or the test-signal simulator. All of it just gets called from
+the same `handleBeat(rrMs, timestamp)` in `main.js`. That's the one seam
+that matters in this codebase: anything that can produce an RR interval
+can drive the whole app.
 
 ## `js/sensors/` — where beats come from
 
@@ -187,6 +189,43 @@ continuous animation is heading. `main.js` also calls
 `resetMetricsUI()`, so disconnecting/resetting eases the scene back to a
 neutral state instead of freezing on the last extreme color.
 
+## `js/visualizer/MoebiusJellyfish.js` — the same mapping, drawn as ink and wash
+
+A second, alternate renderer for the Ocean panel: one jellyfish instead
+of a school, drawn with flowing bezier curves, thin ink outlines, radial-
+gradient color washes, and drifting circular bubbles — a loose nod to
+Mœbius's linework, deliberately the opposite rendering technique from
+`JellyfishOcean`'s flat pixel blocks. It reads the exact same metrics
+shape (`updateMetrics({ coherence, bpm })`, `pulse()`) and reuses the
+same swim-up/fade-out/respawn-from-bottom motion model as the pixel
+version (`js/visualizer/JellyfishOcean.js:181-184`), just applied to one
+larger, more detailed specimen instead of five small ones.
+
+What differs from the pixel renderer, beyond curves-vs-blocks:
+- **Bell** — one closed bezier path (`bezierCurveTo` twice) forms a
+  lens-shaped dome, filled with a radial-gradient wash from the calm/
+  stress color (opaque near the top, fading toward the rim) instead of
+  flat-shaded blocks.
+- **Meridian ribs & hatch shading** — a handful of thin curved lines
+  converging at the bell's apex, plus a small cluster of short diagonal
+  strokes on one side, are pure decoration meant to suggest volume the
+  way cross-contour ink linework does — there's no pixel-art equivalent
+  of this, it only makes sense once you're drawing curves.
+- **Tentacles** — six bezier strands per frame (not per-segment blocks),
+  each stroked with a linear gradient from solid color at the root to
+  fully transparent at the tip, approximating a tapering ink line.
+- **Bubbles** — stroked circles with a small highlight dot, instead of
+  filled squares.
+
+`main.js` instantiates both `JellyfishOcean` and `MoebiusJellyfish`
+against two separate `<canvas>` elements (`#ocean` / `#ocean-moebius`)
+and feeds both from the same `handleBeat()`/`resetMetricsUI()` calls, so
+switching styles mid-session never loses sync with the audio. A small
+"Pixel (school)" / "Moebius (solo)" toggle in `index.html` just flips
+which canvas has the `hidden` attribute (`setOceanStyle()` near the
+bottom of `main.js`) — both keep animating and receiving metrics
+underneath regardless of which is visible.
+
 ## `js/audio/BiofeedbackEngine.js` — HRV metrics → Tone.js sound
 
 Two independent things happen here, both starting only after `start()`
@@ -239,8 +278,8 @@ below; everything else is delegated to the modules above.
   (`wireAdapter()`), and calls `connect()`.
 - Real sensor beats and simulator beats both funnel through the shared
   `handleBeat(rrMs, timestamp)`, which is the only place that touches
-  `HRVProcessor`, `Tachogram`, `BiofeedbackEngine`, and `JellyfishOcean`
-  per beat.
+  `HRVProcessor`, `Tachogram`, `BiofeedbackEngine`, `JellyfishOcean`, and
+  `MoebiusJellyfish` per beat.
 - `updateConnectAvailability()` keeps "Connect" and "Start test signal"
   mutually exclusive — running both at once would interleave two beat
   sources into one HRV window, which is never useful, so starting one
@@ -250,3 +289,8 @@ below; everything else is delegated to the modules above.
 - The stress slider forwards to `RRSimulator.setStress()` on every
   `input` event, so you can drag it live while the test signal runs and
   hear the audio react in real time.
+- `setOceanStyle()` toggles the `hidden` attribute on `#ocean` /
+  `#ocean-moebius` and the `.active` class on the two style buttons —
+  both `JellyfishOcean` and `MoebiusJellyfish` keep animating and
+  receiving metrics regardless of which canvas is visible, so switching
+  never has to "catch up."

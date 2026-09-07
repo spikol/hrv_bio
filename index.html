@@ -48,8 +48,13 @@
 
     <section class="card" id="ocean-card">
       <h2>Ocean</h2>
+      <div class="row style-toggle" role="group" aria-label="Visual style">
+        <button type="button" class="style-btn active" id="style-pixel-btn" data-style="pixel">Pixel (school)</button>
+        <button type="button" class="style-btn" id="style-moebius-btn" data-style="moebius">Moebius (solo)</button>
+      </div>
       <canvas id="ocean" class="ocean-canvas"></canvas>
-      <p class="hint">Jellyfish color blends blue (calm) &rarr; red (stressed) with the calm score, drift speed rises with stress, and each bell pulses in time with BPM &mdash; kicking in sync with the same heartbeat that triggers the audio pulse.</p>
+      <canvas id="ocean-moebius" class="ocean-canvas" hidden></canvas>
+      <p class="hint">Jellyfish color blends blue (calm) &rarr; red (stressed) with the calm score, drift speed rises with stress, and each bell pulses in time with BPM &mdash; kicking in sync with the same heartbeat that triggers the audio pulse. Both styles read the same live metrics.</p>
     </section>
 
     <section class="card" id="audio-card">
