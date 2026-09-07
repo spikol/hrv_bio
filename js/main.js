@@ -218,6 +218,11 @@ function setOceanStyle(style) {
   oceanMoebiusCanvas.hidden = pixel;
   stylePixelBtn.classList.toggle('active', pixel);
   styleMoebiusBtn.classList.toggle('active', !pixel);
+  // Whichever canvas was just un-hidden needs a fresh measurement — it may have been
+  // sized 0x0 while `hidden` (canvases start with display:none, so getBoundingClientRect()
+  // returns nothing to measure until it's actually visible in layout).
+  if (pixel) ocean.resize();
+  else oceanMoebius.resize();
 }
 
 stylePixelBtn.addEventListener('click', () => setOceanStyle('pixel'));

@@ -26,8 +26,8 @@ export class MoebiusJellyfish {
     this.jelly = this._makeJelly();
     this.bubbles = Array.from({ length: 10 }, () => this._makeBubble());
 
-    this._resize();
-    window.addEventListener('resize', () => this._resize());
+    this.resize();
+    window.addEventListener('resize', () => this.resize());
 
     this._last = performance.now();
     requestAnimationFrame((t) => this._tick(t));
@@ -70,11 +70,14 @@ export class MoebiusJellyfish {
     };
   }
 
-  _resize() {
+  /** Re-measure and resize the backing store. Call after unhiding the canvas — a canvas
+   *  measured while `hidden` reports a 0x0 rect, so it needs a fresh measurement once visible. */
+  resize() {
     const dpr = window.devicePixelRatio || 1;
     const rect = this.canvas.getBoundingClientRect();
-    this.canvas.width = Math.max(1, rect.width * dpr);
-    this.canvas.height = Math.max(1, rect.height * dpr);
+    if (rect.width === 0 || rect.height === 0) return;
+    this.canvas.width = rect.width * dpr;
+    this.canvas.height = rect.height * dpr;
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
