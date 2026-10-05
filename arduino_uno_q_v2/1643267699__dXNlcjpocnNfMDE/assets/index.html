@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Heart Rate Monitor</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1 class="title">Heart Rate Monitor</h1>
+      </div>
+      <div class="main-content">
+        <div class="plot-section">
+          <div class="box-title">Live stream</div>
+          <canvas id="plot" width="700" height="220"></canvas>
+        </div>
+        <div class="stats-section">
+          <div class="box-title">Now</div>
+          <div class="stat">
+            <div class="stat-value" id="bpm-value">--</div>
+            <div class="stat-label">BPM</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="calm-value">--</div>
+            <div class="stat-label">Calm score</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="rmssd-value">--</div>
+            <div class="stat-label">RMSSD (ms)</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="sdnn-value">--</div>
+            <div class="stat-label">SDNN (ms)</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value" id="pnn50-value">--</div>
+            <div class="stat-label">pNN50</div>
+          </div>
+          <button id="download-csv" class="download-btn">Download CSV</button>
+        </div>
+      </div>
+      <div id="error-container" class="error-message" style="display: none"></div>
+    </div>
+
+    <script src="libs/socket.io.min.js"></script>
+    <script src="libs/arduino.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

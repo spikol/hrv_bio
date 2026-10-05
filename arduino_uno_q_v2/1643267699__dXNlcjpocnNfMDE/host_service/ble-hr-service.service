@@ -1,0 +1,14 @@
+[Unit]
+Description=Polar H10 BLE -> HTTP bridge for Hrs_01
+After=bluetooth.target network.target
+
+[Service]
+Type=simple
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/usr/bin/python3 -u /home/arduino/ArduinoApps/hrs_01/host_service/ble_hr_service.py
+Restart=on-failure
+RestartSec=5
+User=arduino
+
+[Install]
+WantedBy=multi-user.target
