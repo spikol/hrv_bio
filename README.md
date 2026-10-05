@@ -13,6 +13,10 @@ and how data flows from a heartbeat to a sound, and
 [expansion_plan.md](expansion_plan.md) for what's needed to add EmotiBit
 and BITalino support.
 
+Want the Polar H10 driving a physical display instead of a browser?
+[arduino-uno-q/](arduino-uno-q/) connects it straight to an Arduino UNO Q
+and shows heartbeats + HRV on the board's built-in LED matrix.
+
 ## Running it
 
 Web Bluetooth requires `https://` or `localhost`, and only works in
