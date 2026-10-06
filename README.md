@@ -2,160 +2,164 @@
 
 **Live: [spikol.github.io/hrv_bio](https://spikol.github.io/hrv_bio/)**
 
-A static HTML/CSS/JS app that reads live heart-rate variability from a BLE
-chest strap and turns it into sound with [Tone.js](https://tonejs.github.io/).
-No build step, no server-side code — just files served over HTTP, including
-straight from GitHub Pages above (it's served over `https://`, so Web
-Bluetooth works there too, not just on localhost).
+This project turns live heart-rate variability (HRV) from a Polar H10
+chest strap into sound and visuals, so you can hear and see yourself
+relax. Open the link above in Chrome or Edge, connect your strap, and
+it starts within seconds. You don't need to install anything.
 
-See [notes.md](notes.md) for a walkthrough of how the code is organized
-and how data flows from a heartbeat to a sound, and
-[expansion_plan.md](expansion_plan.md) for what's needed to add EmotiBit
-and BITalino support.
+## Pick a way to run it
 
-Want the Polar H10 driving a physical display instead of a browser?
-[arduino-uno-q/](arduino-uno-q/) connects it straight to an Arduino UNO Q
-and shows heartbeats + HRV on the board's built-in LED matrix.
+| You want… | Use | Hardware |
+| --- | --- | --- |
+| Sound and visuals in a browser | The web app (this folder) | Polar H10 + Chrome/Edge, or no sensor (test signal) |
+| A standalone display with no computer attached | [arduino-uno-q/](arduino-uno-q/) | Polar H10 + Arduino UNO Q |
+| The same, plus a live plot and CSV export in a browser | [arduino_uno_q_v2/](arduino_uno_q_v2/1643267699__dXNlcjpocnNfMDE/) | Polar H10 + Arduino UNO Q running App Lab |
 
-## Running it
+The rest of this README covers the web app. Each Arduino folder has its
+own README.
 
-Web Bluetooth requires `https://` or `localhost`, and only works in
-Chromium-based browsers (Chrome, Edge). It will not work in Safari or Firefox.
+For more detail, see:
 
-Easiest: just open **[spikol.github.io/hrv_bio](https://spikol.github.io/hrv_bio/)**
-in Chrome or Edge — it's `https://`, so no local setup needed.
+- [notes.md](notes.md): how the code is organized, and how a heartbeat
+  becomes a sound
+- [expansion_plan.md](expansion_plan.md): how to add EmotiBit and
+  BITalino support
 
-To run it locally instead (e.g. while making changes):
+## Run the web app
+
+Web Bluetooth only works in Chromium-based browsers (Chrome, Edge), and
+only over `https://` or `localhost`. It does not work in Safari or
+Firefox.
+
+**Hosted:** open [spikol.github.io/hrv_bio](https://spikol.github.io/hrv_bio/).
+It is served over `https://`, so it needs no setup.
+
+**Local** (when you are changing the code):
 
 ```sh
-cd /Users/zfp165/Documents/dev/hrv
 python3 -m http.server 8000
 ```
 
 Then open `http://localhost:8000` in Chrome or Edge.
 
-1. Wake your Polar H10 (tap it or put it on — it won't advertise while idle).
-2. Click **Connect**, pick it from the browser's device picker.
-3. Click **Enable audio** (required — browsers block audio until a user
-   gesture starts it). **Turn off audio** disposes the audio graph again.
+1. Wake your Polar H10 by tapping it or putting it on. It won't
+   advertise while idle.
+2. Click **Connect** and pick the strap in the browser's device picker.
+3. Click **Enable audio**. Browsers block sound until you click
+   something. **Turn off audio** stops it again.
 
-No sensor on hand? Use the **Test signal** card instead of Connect — drag
-the Relaxed/Stressed slider and click **Start test signal** to feed
-synthetic heartbeats through the same HRV + audio pipeline. Connect and
-the test signal are mutually exclusive (starting one disables the other)
-so their beats never mix into the same HRV window.
+**No sensor?** Use the **Test signal** card instead. Set the
+Relaxed/Stressed slider and click **Start test signal**. This feeds
+synthetic heartbeats through the same HRV and audio pipeline. You can run
+either the sensor or the test signal, but not both, so their beats never
+mix.
 
-## Architecture
+## How the web app works
 
-```
+Every heartbeat flows through one pipeline: sensor → HRV processor →
+audio + visuals. There is no build step and no server-side code.
+
+```text
 index.html          entry point, loads Tone.js from CDN + js/main.js
-css/style.css        UI styling
+css/style.css       UI styling
 
-js/main.js            wires sensor -> HRV processor -> visualizer + audio together
+js/main.js          wires sensor -> HRV processor -> visualizer + audio
 
 js/sensors/
-  SensorAdapter.js     base interface every device adapter implements
-  PolarH10Adapter.js    real implementation: BLE Heart Rate Service (Polar H10)
-  FutureAdapters.js     stubs for EmotiBit / BITalino (see below)
-  registry.js           device list shown in the picker — add new devices here
+  SensorAdapter.js    base interface every device adapter implements
+  PolarH10Adapter.js  BLE Heart Rate Service (Polar H10)
+  FutureAdapters.js   stubs for EmotiBit / BITalino
+  registry.js         device list shown in the picker; add new devices here
 
 js/hrv/HRVProcessor.js  rolling HRV metrics from a stream of RR intervals
 
-js/visualizer/Tachogram.js      canvas beat-to-beat interval chart
-js/visualizer/JellyfishOcean.js    pixel-art jellyfish scene: HRV metrics -> color/motion
-js/visualizer/MoebiusJellyfish.js  same mapping, drawn as a single ink-and-wash jellyfish
+js/visualizer/Tachogram.js         beat-to-beat interval chart
+js/visualizer/JellyfishOcean.js    pixel-art jellyfish school
+js/visualizer/MoebiusJellyfish.js  single ink-and-wash jellyfish
 
 js/audio/BiofeedbackEngine.js  Tone.js graph: HRV metrics -> sound
 
-js/sim/RRSimulator.js  generates synthetic RR intervals (Relaxed/Stressed
-                        slider) for testing the audio mapping with no
-                        sensor attached
+js/sim/RRSimulator.js  synthetic RR intervals for testing with no sensor
 ```
 
-### Sensor adapters
+### Any sensor can plug in through one interface
 
-Every device adapter extends `SensorAdapter` and dispatches the same events,
-so the rest of the app (HRV math, visualizer, audio) never needs to know
-which physical device is connected:
+Every device adapter extends `SensorAdapter` and fires the same events.
+As a result, the HRV math, visuals, and audio don't depend on which
+device is connected.
 
-- `statuschange` — `{ status: 'disconnected'|'connecting'|'connected'|'error', message? }`
-- `beat` — `{ rrMs, timestamp }`, once per detected heartbeat
-- `hr` — `{ bpm, timestamp }`, device-reported instantaneous BPM
-- `battery` — `{ level }`, 0–100, if the device exposes it
+- `statuschange`: `{ status: 'disconnected'|'connecting'|'connected'|'error', message? }`
+- `beat`: `{ rrMs, timestamp }`, once per heartbeat
+- `hr`: `{ bpm, timestamp }`, the BPM reported by the device
+- `battery`: `{ level }`, 0–100, if the device reports it
 
-**Polar H10** (implemented) uses the standard BLE Heart Rate Service and
-parses the RR-interval fields in the Heart Rate Measurement characteristic
-— that's what makes real HRV possible, not just BPM. It also does a
-one-shot battery level read if the Battery Service is available.
+**Polar H10 works today.** It uses the standard BLE Heart Rate Service.
+The adapter reads the RR intervals (the time between beats), which is
+what makes real HRV possible, not just BPM.
 
-**EmotiBit** and **BITalino** (stubbed, not yet implemented) are next on
-the list but don't map cleanly onto Web Bluetooth:
-- EmotiBit streams multi-channel biosignals (including PPG for HR/HRV)
-  over WiFi/OSC via its own tooling, not a fixed BLE GATT characteristic.
-- BITalino boards typically pair over Bluetooth *Classic* (SPP), which
-  Web Bluetooth (BLE-only) can't open directly.
+**EmotiBit and BITalino are stubs.** Neither fits Web Bluetooth. EmotiBit
+streams over WiFi/OSC, and BITalino pairs over Bluetooth Classic, which
+browsers can't open. Both will need a small local bridge, such as a
+WebSocket relay. Their stubs already implement `SensorAdapter`, so adding
+either means filling in `connect()`/`disconnect()` and adding one entry
+to `registry.js`. [expansion_plan.md](expansion_plan.md) describes each
+bridge.
 
-Both will likely need a small local bridge (e.g. a WebSocket relay) rather
-than a browser-only BLE connection. Their stub classes already implement
-the `SensorAdapter` interface, so wiring them in later is a matter of
-filling in `connect()`/`disconnect()`, not restructuring the app. To add a
-device once its adapter exists, add one entry to `js/sensors/registry.js`.
-See [expansion_plan.md](expansion_plan.md) for the detailed bridge design
-for each.
+### Five metrics over a 60-second window
 
-### HRV metrics
+- **BPM**: 60000 ÷ mean RR interval
+- **SDNN**: standard deviation of RR intervals
+- **RMSSD**: root mean square of successive RR differences
+- **pNN50**: % of successive RR differences over 50 ms
+- **Calm score** (0–1): RMSSD compared with its own slow-moving
+  baseline, then smoothed onto a 0–1 curve. It is a lightweight stand-in
+  for HeartMath coherence, not the real thing (which needs spectral
+  analysis).
 
-Computed over a 60-second sliding window of RR intervals:
+### Higher HRV sounds calmer and more open
 
-- **BPM** — 60000 / mean RR interval
-- **SDNN** — standard deviation of RR intervals
-- **RMSSD** — root mean square of successive RR differences
-- **pNN50** — % of successive RR differences greater than 50ms
-- **Calm score** — a simplified, relative "openness" indicator in `[0, 1]`:
-  RMSSD relative to its own slow-moving baseline, squashed through a
-  logistic curve. This is **not** the frequency-domain HeartMath coherence
-  metric (which needs spectral/LF-power analysis) — it's a lightweight
-  stand-in that still moves smoothly enough to drive audio in real time.
+- Each heartbeat triggers a short drum pulse (`MembraneSynth`).
+- A sustained pad crossfades from a tense chord to a calm chord as the
+  calm score rises.
+- RMSSD drives the pad's filter and reverb. With high HRV the sound is
+  bright and spacious. With low HRV it is muffled and dry.
 
-### Audio mapping (Tone.js)
+To change how HRV maps to sound, edit
+`BiofeedbackEngine.updateMapping()`. That is where you would add new
+mappings, such as tempo from BPM or a breathing pacer.
 
-- Every heartbeat triggers a short percussive pulse (`MembraneSynth`).
-- A sustained pad crossfades between a calm chord voicing and a tense
-  chord voicing based on the calm score.
-- The pad's lowpass filter cutoff and reverb amount are driven by RMSSD
-  — higher HRV opens the filter and adds space; lower HRV muffles and
-  dries it out.
+### Jellyfish show the same state as the sound
 
-All mappings live in `BiofeedbackEngine.updateMapping()` — that's the
-place to retune ranges, swap synths, or add new mapped parameters (e.g.
-tempo from BPM, a breathing pacer, etc).
+The **Ocean** panel has two styles, which you switch in the panel:
 
-### Ocean visualization
+- **Pixel (school)**: five flat-shaded pixel-art jellyfish
+- **Moebius (solo)**: one jellyfish with flowing ink lines, a soft color
+  wash, and drifting bubbles
 
-The **Ocean** panel mirrors the audio mapping visually, in two swappable
-styles (toggle in the panel), both reading the same live metrics:
-
-- **Pixel (school)** — five flat-shaded pixel-art jellyfish.
-- **Moebius (solo)** — one jellyfish drawn with flowing bezier curves,
-  ink outlines, and a soft color wash, plus drifting bubbles — a loose
-  nod to Mœbius's linework, the opposite technique from the blocky pixel
-  style.
-
-In both, jellyfish blend blue (calm) to red (stressed) based on the calm
-score, continuously swim upward and fade out near the top edge, then
-respawn fading in from below the bottom — faster and more often under
-stress, slow and unhurried when calm. Their bells pulse in time with BPM,
-with an extra synchronized kick on every real heartbeat, the same moment
-the audio pulse fires. Both renderers are driven by the same
-`handleBeat()` call in `main.js` as the audio, so switching styles never
-falls out of sync.
+In both styles, jellyfish shift from blue (calm) to red (stressed). They
+rise and respawn faster under stress and drift slowly when you're calm.
+Their bells pulse with your BPM and kick on every real heartbeat. Audio
+and visuals share the same `handleBeat()` call in `main.js`, so they
+stay in sync.
 
 ## Known limitations
 
-- Only tested against the standard BLE Heart Rate Service profile (Polar
-  H10). Other BLE HR straps that follow the same GATT profile should work
-  too, but haven't been tried.
-- The BLE connection path itself needs a real device in hand to verify —
-  it wasn't exercised end-to-end in the environment this was built in.
-- "Calm score" is a relative, per-session heuristic, not a validated
-  physiological coherence metric — don't use it for anything clinical.
+- **Only tested with the Polar H10.** Other straps that use the standard
+  BLE Heart Rate profile should work but haven't been tried.
+- **The calm score is a per-session heuristic.** It has not been
+  validated, so don't use it for anything clinical.
+- **The Arduino versions have not been run on real hardware.** See each
+  folder's README for what still needs checking.
+
+## Known issues to fix
+
+- **v1 probably can't find the strap.** In
+  [arduino-uno-q/python/polar_hrv_display.py](arduino-uno-q/python/polar_hrv_display.py),
+  the Heart Rate service and characteristic UUIDs end in `...34fa`. The
+  standard Bluetooth UUIDs end in `...34fb`. v2 uses the correct value.
+- **v2 only connects to one specific strap.**
+  [ble_hr_service.py](arduino_uno_q_v2/1643267699__dXNlcjpocnNfMDE/host_service/ble_hr_service.py)
+  looks for the exact device name `"Polar H10 434D7326"`. To use another
+  strap, change `DEVICE_NAME_HINT` to `"Polar H10"`.
+- **v2's README is empty.** Setup steps currently live in
+  [host_service/README.md](arduino_uno_q_v2/1643267699__dXNlcjpocnNfMDE/host_service/README.md).
